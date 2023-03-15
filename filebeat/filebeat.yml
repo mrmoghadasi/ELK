@@ -1,0 +1,51 @@
+# ============================== Filebeat inputs ===============================
+
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /var/log/nginx/error.log
+  exclude_files: ['.gz$']
+  fields:
+    type: webserver_error_log
+  fields_under_root: true
+
+
+- type: log
+  enabled: true
+  paths:
+    - /var/log/nginx/access.log
+  exclude_files: ['.gz$']
+  fields:
+    type: webserver_access_log
+  fields_under_root: true
+
+
+# ============================== Filebeat modules ==============================
+
+filebeat.config.modules:
+  # Glob pattern for configuration loading
+  path: ${path.config}/modules.d/*.yml
+
+  # Set to true to enable config reloading
+  reload.enabled: false
+
+  # Period on which files under path should be checked for changes
+  #reload.period: 10s
+
+# ================================== Outputs ===================================
+
+# ------------------------------ Logstash Output -------------------------------
+output.logstash:
+        hosts: ["x.x.x.x:port"]
+
+# ================================= Processors =================================
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+
+
+logging.level: error
