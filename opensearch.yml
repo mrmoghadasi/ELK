@@ -1,0 +1,50 @@
+cluster.name: "opensearch-cluster"
+network.host: 0.0.0.0 # Required if not using the demo security configuration
+
+bootstrap.memory_lock: "true" # Along with the memlock settings below, disables swapping
+
+cluster.routing.allocation.disk.threshold_enabled: true
+cluster.routing.allocation.disk.watermark.low: 93%
+cluster.routing.allocation.disk.watermark.high: 95%
+
+cluster.initial_master_nodes: "os-n1,os-n2,os-n3"
+
+discovery.seed_hosts: "os-n1,os-n2,os-n3"
+
+######## Start OpenSearch Security Configuration ########
+plugins.security.ssl.transport.pemtrustedcas_filepath: certificates/ca/ca.pem
+plugins.security.ssl.transport.enforce_hostname_verification: false
+plugins.security.ssl.http.enabled: true
+plugins.security.ssl.http.pemtrustedcas_filepath: certificates/ca/ca.pem
+plugins.security.allow_unsafe_democertificates: false
+plugins.security.allow_default_init_securityindex: true
+plugins.security.authcz.admin_dn:
+  - "CN=ADMIN,O=MRM,L=Iran,ST=MHD,C=IR"
+plugins.security.nodes_dn:
+  - "CN=os-n1,O=MRM,L=Iran,ST=MHD,C=IR"
+  - "CN=os-n2,O=MRM,L=Iran,ST=MHD,C=IR"
+  - "CN=os-n3,O=MRM,L=Iran,ST=MHD,C=IR"
+
+# Uncomment the option below to enable audit logging
+# plugins.security.audit.type: debug # Outputs audit logs to stdout. Useful for testing and debugging.
+plugins.security.enable_snapshot_restore_privilege: true
+plugins.security.check_snapshot_restore_write_privileges: true
+plugins.security.restapi.roles_enabled:
+  ["all_access", "security_rest_api_access"]
+plugins.security.system_indices.enabled: true
+plugins.security.system_indices.indices:
+  [
+    ".opendistro-alerting-config",
+    ".opendistro-alerting-alert*",
+    ".opendistro-anomaly-results*",
+    ".opendistro-anomaly-detector*",
+    ".opendistro-anomaly-checkpoints",
+    ".opendistro-anomaly-detection-state",
+    ".opendistro-reports-*",
+    ".opendistro-notifications-*",
+    ".opendistro-notebooks",
+    ".opendistro-asynchronous-search-response*",
+    ".replication-metadata-store",
+  ]
+node.max_local_storage_nodes: 3
+######## End OpenSearch Security Configuration ########
