@@ -20,6 +20,34 @@ This project deploys an OpenSearch cluster with 3 master nodes, 1 OpenSearch Das
 - Docker Compose
 - OpenSSL
 
+## Pre-Deploy Step
+
+Raise your host's ulimits for ElasticSearch to handle high I/O :
+
+```
+sudo sysctl -w vm.max_map_count=512000
+```
+
+To Persist this setting: 
+
+Add the following line to `/etc/sysctl.conf`:
+
+```
+vm.max_map_count=512000
+```
+
+Reload the config as root:
+
+```
+sysctl -p
+```
+
+Check the new value:
+
+```
+cat /proc/sys/vm/max_map_count
+```
+
 ## Deployment Steps
 
 1. Clone the repository
