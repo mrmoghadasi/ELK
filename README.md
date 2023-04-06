@@ -107,7 +107,7 @@ docker-compose restart
 ```
 
 ## Usage
-Access OpenSearch Dashboards via `http://{{your_server_ip}}:5601`
+Access OpenSearch Dashboards via `https://{{your_server_ip}}:5601`
 
 Default username is `admin` and password is `mrm_pass`.
 
