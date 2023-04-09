@@ -1,0 +1,174 @@
+version: "3"
+services:
+  os-n1:
+    #restart: unless-stopped
+    image: opensearchproject/opensearch:2.6.0
+    container_name: os-n1
+    environment:
+      - node.name=os-n1
+      - plugins.security.ssl.transport.pemkey_filepath=certificates/os-n1/os-n1.key
+      - plugins.security.ssl.transport.pemcert_filepath=certificates/os-n1/os-n1.pem
+      - plugins.security.ssl.http.pemkey_filepath=certificates/os-n1/os-n1.key
+      - plugins.security.ssl.http.pemcert_filepath=certificates/os-n1/os-n1.pem
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # min and max Java heap size, recommend setting both to 50% of system RAM1
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - JAVA_HOME=/usr/share/opensearch/jdk
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data
+      - ./opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+      - ./internal_users.yml:/usr/share/opensearch/config/opensearch-security/internal_users.yml
+      - ./certs:/usr/share/opensearch/config/certificates:ro
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
+    networks:
+      - opensearch-net
+  os-n2:
+    #restart: unless-stopped
+    image: opensearchproject/opensearch:2.6.0
+    container_name: os-n2
+    environment:
+      - node.name=os-n2
+      - plugins.security.ssl.transport.pemkey_filepath=certificates/os-n2/os-n2.key
+      - plugins.security.ssl.transport.pemcert_filepath=certificates/os-n2/os-n2.pem
+      - plugins.security.ssl.http.pemkey_filepath=certificates/os-n2/os-n2.key
+      - plugins.security.ssl.http.pemcert_filepath=certificates/os-n2/os-n2.pem
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - JAVA_HOME=/usr/share/opensearch/jdk # Required for securityadmin.sh
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data2:/usr/share/opensearch/data
+      - ./opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+      - ./internal_users.yml:/usr/share/opensearch/config/opensearch-security/internal_users.yml
+      - ./certs:/usr/share/opensearch/config/certificates:ro
+    networks:
+      - opensearch-net
+
+  os-n3:
+    #restart: unless-stopped
+    image: opensearchproject/opensearch:2.6.0
+    container_name: os-n3
+    environment:
+      - node.name=os-n3
+      - plugins.security.ssl.transport.pemkey_filepath=certificates/os-n3/os-n3.key
+      - plugins.security.ssl.transport.pemcert_filepath=certificates/os-n3/os-n3.pem
+      - plugins.security.ssl.http.pemkey_filepath=certificates/os-n3/os-n3.key
+      - plugins.security.ssl.http.pemcert_filepath=certificates/os-n3/os-n3.pem
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - JAVA_HOME=/usr/share/opensearch/jdk # Required for securityadmin.sh
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data3:/usr/share/opensearch/data
+      - ./opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+      - ./internal_users.yml:/usr/share/opensearch/config/opensearch-security/internal_users.yml
+      - ./certs:/usr/share/opensearch/config/certificates:ro
+    networks:
+      - opensearch-net
+        
+  opensearch-dashboards:
+    #restart: unless-stopped
+    image: opensearchproject/opensearch-dashboards:2.6.0
+    container_name: opensearch-dashboards
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.opensearch-dashboard.rule=Host(`elk.webimoon.ir`)"
+      - "traefik.http.routers.opensearch-dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.opensearch-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.opensearch-dashboard.middlewares=opensearch-dashboard-stripprefix"
+      - "traefik.http.middlewares.opensearch-dashboard-stripprefix.stripprefix.prefixes=/dashboard"
+#    ports:
+#      - 5601:5601
+#    expose:
+#      - "5601"
+    environment:
+      OPENSEARCH_URL: https://os-n1:9200      
+      OPENSEARCH_HOSTS: '["https://os-n1:9200","https://os-n2:9200","https://os-n3:9200"]' # must be a string with no spaces when specified as an environment variable
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_DASHBOARDS_ENABLE_CORS: "true"
+      SERVER_BASEPATH: "/dashboard"
+    volumes:
+      - opensearch_dashboards:/usr/share/opensearch-dashboards      
+      - ./opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
+      - ./certs:/usr/share/opensearch-dashboards/config/certificates:ro
+    networks:
+      - opensearch-net
+
+## reverse Proxy
+  traefik:
+    image: "traefik:v2.5"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.email=mrm.elec@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+        #     - "8080:8080"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - opensearch-net
+ 
+  logstash01:
+    image: opensearchproject/logstash-oss-with-opensearch-output-plugin:7.16.2
+    container_name: logstash01
+    restart: always
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+      - type: bind
+        source: ./logstash/pipelines.yml
+        target: /usr/share/logstash/config/pipelines.yml
+        read_only: false
+      - type: bind
+        source: ./logstash/pipeline
+        target: /usr/share/logstash/pipeline
+        read_only: true        
+    ports:
+      - "5060:5060"
+      - "5091:5091"
+    environment:
+      LS_JAVA_OPTS: "-Xmx30g -Xms30g"
+      PIPELINE_WORKERS: "2"
+      LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
+    networks:
+      - opensearch-net
+
+volumes:
+  opensearch-data1:
+  opensearch-data2:
+  opensearch-data3:
+  opensearch_dashboards:        
+
+networks:
+  opensearch-net:

@@ -1,0 +1,26 @@
+---
+# This is the internal user database
+# The hash value is a bcrypt hash and can be generated with plugin/tools/hash.sh
+
+_meta:
+  type: "internalusers"
+  config_version: 2
+
+admin:
+  hash: "$2y$12$uknUm0TQUyujTXOq9ZLXjOkBaLnWRAmQuVBcbwWzFCIoQPdIEo9g6"
+  reserved: true
+  backend_roles:
+    - "admin"
+  description: "Admin user"
+
+kibanaserver:
+  hash: "$2y$12$swNm8NKN6JWhRoGz615PN.aJcbvOsQFI/yJkEF62xcsjyjm9Pzvgu"
+  reserved: true
+  description: "User for the OpenSearch Dashboards server"
+
+logstash:
+  hash: "$2a$12$u1ShR4l4uBS3Uv59Pa2y5.1uQuZBrZtmNfqB3iM/.jL0XoV9sghS2"
+  reserved: false
+  backend_roles:
+  - "logstash"
+  description: "Demo logstash user, using external role mapping"    
