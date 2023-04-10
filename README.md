@@ -94,7 +94,7 @@ The cluster should now be up and running, with the OpenSearch Dashboard accessib
 
 To create a password for each user, enter the following command: 
 ```bash
-docker-compose exec opensearch-node1 bash -c "plugins/opensearch-security/tools/hash.sh -p new_password"
+docker-compose exec os-n1 bash -c "plugins/opensearch-security/tools/hash.sh -p new_password"
 ```
 This command creates a hashed password. Instead of `new_password`, enter the new password.
 
