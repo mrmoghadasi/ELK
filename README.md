@@ -8,6 +8,7 @@ Dockerized cluster architecture for OpenSearch with compose.
 
 This project deploys an OpenSearch cluster with 3 master nodes, 1 OpenSearch Dashboard node, and 1 Logstash node. The cluster uses SSL to secure communication between nodes, and the SSL certificates are generated as part of the deployment process.
 
+![My Image](opensearch.png)
 
 ## Key concepts
 
